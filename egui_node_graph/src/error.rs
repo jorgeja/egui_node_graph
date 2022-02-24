@@ -7,4 +7,7 @@ pub enum EguiGraphError {
 
     #[error("Parameter {0:?} was not found in the graph.")]
     InvalidParameterId(AnyParameterId),
+
+    #[error("NodeId {0:?} was not found in the graph.")]
+    UnknownNode(NodeId)
 }

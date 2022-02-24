@@ -112,6 +112,34 @@ impl<NodeData, DataType, ValueType> Graph<NodeData, DataType, ValueType> {
     pub fn get_output(&self, output: OutputId) -> &OutputParam<DataType> {
         &self.outputs[output]
     }
+
+    pub fn change_node_input_type(&mut self, node_id: NodeId, input_name: &str, new_data_type: DataType, new_value_type: ValueType) -> Result<(), EguiGraphError>{
+        let node = self.nodes.get(node_id).ok_or(EguiGraphError::UnknownNode(node_id))?;
+        let input_id = node.get_input(input_name)?;
+        self.change_input_type(input_id, new_data_type, new_value_type);
+        Ok(())
+    }
+    
+    pub fn change_node_output_type(&mut self, node_id: NodeId, output_name: &str, new_data_type: DataType) -> Result<(), EguiGraphError>{
+        let node = self.nodes.get(node_id).ok_or(EguiGraphError::UnknownNode(node_id))?;
+        let output_id = node.get_output(output_name)?;
+        self.change_output_type(output_id, new_data_type);
+        Ok(())
+    }
+
+    fn change_input_type(&mut self, input_id: InputId, new_data_type: DataType, new_value_type: ValueType) {        
+        if let Some(input) = self.inputs.get_mut(input_id) {
+            input.change_type(new_data_type, new_value_type);
+            self.connections.remove(input_id);
+        }
+    }
+
+    fn change_output_type(&mut self, output_id: OutputId, new_data_type: DataType) {        
+        if let Some(output) = self.outputs.get_mut(output_id) {
+            output.typ = new_data_type;
+            self.connections.retain(|_, o| *o != output_id);
+        }
+    }
 }
 
 impl<NodeData, DataType, ValueType> Default for Graph<NodeData, DataType, ValueType> {
@@ -171,5 +199,10 @@ impl<DataType, ValueType> InputParam<DataType, ValueType> {
 
     pub fn node(&self) -> NodeId {
         self.node
+    }
+
+    fn change_type(&mut self, new_data_type: DataType, new_value_type: ValueType) {
+        self.typ = new_data_type;
+        self.value = new_value_type;
     }
 }
